@@ -63,25 +63,49 @@ char	*ft_first_line(char *stash)
 	return (line);
 }
 
-char	*ft_strjoin_free(char *stash, char *buffer)
+char	*ft_strjoin_free(char *stash, char *buffer
+		, size_t *len, size_t *capacity)
 {
 	char	*tmp;
+	size_t	i;
+	size_t	b_len;
 
-	tmp = ft_strjoin(stash, buffer);
-	free(stash);
-	return (tmp);
+	b_len = ft_strlen(buffer);
+	i = 0;
+	if (*len + b_len+ 1 > *capacity)
+	{
+		*capacity *= 2;
+		tmp = malloc(*capacity);
+		if (!tmp)
+			return (NULL);
+		while (stash[i])
+		{
+			tmp[i] = stash[i];
+			i++;
+		}
+		free(stash);
+		stash = tmp;
+	}
+	i = 0;
+	while (i < b_len)
+		stash[(*len)++] = buffer[i++];
+	stash[*len] = '\0';
+	return (stash);
 }
 
 char	*ft_fill_stash(int fd, char *stash)
 {
 	ssize_t	bytes;
+	size_t	len;
+	size_t	capacity;
 	char	*buffer;
 
+	len = 0;
 	bytes = 1;
-	if (!stash)
-		stash = ft_calloc(1, 1);
+	capacity = BUFFER_SIZE;
 	buffer = ft_calloc(BUFFER_SIZE + 1, 1);
-	if (!buffer)
+	stash = malloc(capacity);
+	if (!buffer || !stash)
 		return (NULL);
 	while (bytes > 0)
 	{
@@ -89,7 +113,7 @@ char	*ft_fill_stash(int fd, char *stash)
 		if (bytes == -1)
 			return (free(buffer), free(stash), NULL);
 		buffer[bytes] = 0;
-		stash = ft_strjoin_free(stash, buffer);
+		stash = ft_strjoin_free(stash, buffer, &len, &capacity);
 		if (ft_strchr(stash, '\n') || !stash)
 			break ;
 	}
